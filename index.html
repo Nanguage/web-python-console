@@ -358,16 +358,32 @@
 
             document.pyodideMplTarget = $(".terminal-wrapper")[0]
 
+            function stringToBool(string) {
+                switch (string.toLowerCase().trim()) {
+                    case "true": case "yes": case "1": return true;
+                    case "false": case "no": case "0": case null: return false;
+                    default: return Boolean(string);
+                }
+            }
+
+            let showCode = urlParams.get("show_code")
+            if (showCode === undefined) {
+                showCode = true
+            } else {
+                showCode = stringToBool(showCode)
+            }
             const code = urlParams.get("code");
             if (code) {
-                term.exec(code);
+                term.echo("--- Running code ---")
+                term.exec(code, !showCode);
             }
             const flie = urlParams.get("file");
             if (flie) {
                 const response = await fetch(flie);
                 let text = await response.text();
                 text = text.replaceAll("\r\n", "\n");
-                term.exec(text);
+                term.echo(`--- Running ${flie} ---`)
+                term.exec(text, !showCode);
             }
         }
         window.console_ready = main();
