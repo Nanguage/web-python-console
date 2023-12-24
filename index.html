@@ -205,8 +205,23 @@
                     let wrapped = await_fut(fut);
                     // complete case, get result / error and print it.
                     try {
+                        const mplShow = escaped.includes("plt.show()");
+                        let mplTarget = null;
+                        if (mplShow) {
+                            term.echo();
+                            const outputs = $(".terminal-output")[0].children
+                            mplTarget = outputs[outputs.length - 1]
+                            document.pyodideMplTarget = mplTarget
+                        }
+                        // Real execution happens here.
                         let [value] = await wrapped;
-                        if (escaped.includes("plt.show()")) {
+                        if (mplShow) {
+                            if (mplTarget) {
+                                mplTarget.children[0].style.display = "none";
+                                if (mplTarget.children.length > 1) {
+                                    mplTarget.children[1].removeAttribute("id")
+                                }
+                            }
                             updateButtonLabel();
                         }
                         if (value !== undefined) {
