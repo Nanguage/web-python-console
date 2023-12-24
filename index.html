@@ -86,6 +86,24 @@
             return new Promise((resolve) => setTimeout(resolve, s));
         }
 
+        function updateButtonLabel() {
+            $(".fa-home").map((_, el) => {
+                el.innerHTML = "Home";
+            });
+            $(".fa-arrow-left").map((_, el) => {
+                el.innerHTML = "Back";
+            });
+            $(".fa-arrow-right").map((_, el) => {
+                el.innerHTML = "Forward";
+            });
+            $(".fa-arrows").map((_, el) => {
+                el.innerHTML = "Pan";
+            });
+            $(".fa-search-plus").map((_, el) => {
+                el.innerHTML = "Zoom";
+            });
+        }
+
         async function main() {
             let indexURL = "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/";
             const urlParams = new URLSearchParams(window.location.search);
@@ -188,6 +206,9 @@
                     // complete case, get result / error and print it.
                     try {
                         let [value] = await wrapped;
+                        if (escaped.includes("plt.show()")) {
+                            updateButtonLabel();
+                        }
                         if (value !== undefined) {
                             echo(
                                 repr_shorten.callKwargs(value, {
@@ -269,6 +290,8 @@
             if (searchParams.has("noblink")) {
                 $(".cmd-cursor").addClass("noblink");
             }
+
+            document.pyodideMplTarget = $(".terminal-wrapper")[0]
         }
         window.console_ready = main();
     </script>
