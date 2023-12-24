@@ -307,6 +307,18 @@
             }
 
             document.pyodideMplTarget = $(".terminal-wrapper")[0]
+
+            const code = urlParams.get("code");
+            if (code) {
+                term.exec(code);
+            }
+            const flie = urlParams.get("file");
+            if (flie) {
+                const response = await fetch(flie);
+                let text = await response.text();
+                text = text.replaceAll("\r\n", "\n");
+                term.exec(text);
+            }
         }
         window.console_ready = main();
     </script>
