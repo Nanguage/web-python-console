@@ -11,3 +11,11 @@ It allows you to run Python code in the browser, and you can also directly execu
 - Allow control using ImJoy RPC, integrate with ImJoy ecosystem
 
 This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide/blob/main/src/templates/console.html).
+
+
+## Usage
+
+### URL Parameters
+
+- `code`: the Python code to be executed
+- `file`: the URL of the Python file to be executed

@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/jquery.terminal.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/unix_formatting.min.js"></script>
     <script src="https://lib.imjoy.io/imjoy-loader.js"></script>
+    <script src="https://lib.imjoy.io/imjoy-loader.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/css/jquery.terminal.min.css" rel="stylesheet" />
     <!-- add icon -->
     <link rel="icon" href="https://imjoy.io//static/icons/favicon-32x32.png" />
@@ -29,21 +30,6 @@
 
         body {
             background-color: black;
-        }
-
-        #jquery-terminal-logo {
-            color: white;
-            border-color: white;
-            position: absolute;
-            top: 7px;
-            right: 18px;
-            z-index: 2;
-        }
-
-        #jquery-terminal-logo a {
-            color: gray;
-            text-decoration: none;
-            font-size: 0.7em;
         }
 
         #loading {
@@ -71,20 +57,84 @@
                 -webkit-transform: rotate(360deg);
             }
         }
+
+        #menu-container {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            z-index: 100;
+        }
     </style>
 </head>
 
 <body>
-    <div id="jquery-terminal-logo">
-        <a href="https://terminal.jcubic.pl/">jQuery Terminal</a>
-    </div>
     <div id="loading"></div>
+    <div id="menu-container"></div>
+    <div id="window-container" style="height:0px;"></div>
     <script>
         "use strict";
+
+        window.app = {};
 
         function sleep(s) {
             return new Promise((resolve) => setTimeout(resolve, s));
         }
+
+        async function setupImJoyApp() {
+            const app = await loadImJoyBasicApp({
+                name: "web-python-console",
+                process_url_query: true,
+                show_window_title: false,
+                show_progress_bar: true,
+                show_empty_window: true,
+                menu_style: { position: "absolute", right: 0, top: "2px" },
+                window_style: { width: "100%", height: "100%" },
+                main_container: null,
+                menu_container: "menu-container",
+                window_manager_container: null,
+                expose_api: true,
+                imjoy_api: {},
+            });
+            const api = app.imjoy.api;
+            window.app.imjoy = api;
+            // if you want to let users to load new plugins, add a menu item
+            app.addMenuItem({
+                label: "➕ Load Plugin",
+                callback() {
+                    const uri = prompt(
+                        `Please type a ImJoy plugin URL`,
+                        "https://github.com/imjoy-team/imjoy-plugins/blob/master/repository/ImageAnnotator.imjoy.html"
+                    );
+                    if (uri) app.loadPlugin(uri);
+                },
+            });
+
+            return app;
+        }
+
+        async function exportImjoyRPC(api) {
+            function setup() {
+                api.log("web-python-console is ready.")
+            }
+            api.export({
+                setup: setup,
+            })
+        }
+
+        async function initImJoy() {
+            // start as an plugin
+            if (window.self !== window.top) {
+                const imjoyRPC = await loadImJoyRPC();
+                const api = await imjoyRPC.setupRPC({ name: "web-python-console" });
+                window.app.imjoy = api;
+                await exportImjoyRPC(api);
+            } else {
+                // start as an standalone app
+                await setupImJoyApp();
+            }
+        }
+
+        initImJoy();
 
         function updateButtonLabel() {
             $(".fa-home").map((_, el) => {
