@@ -22,3 +22,15 @@ This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide
 - `code`: the Python code to be executed
 - `file`: the URL of the Python file to be executed
 - `show_code`: whether to show the code in console, default is `true`
+
+### ImJoy API
+
+The console is integrated with ImJoy, you can use the ImJoy API to control the console.
+
+| API | Description | Parameters |
+| --- | --- | --- |
+| `.echo` | Print a message to the console | `msg: string` |
+| `.clear` | Clear the console | |
+| `.exec` | Execute Python code | `code: string; show_code: bool = true` |
+| `.restart` | Restart the console | |
+| `.get_content` | Get the content of the console | |

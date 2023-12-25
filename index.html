@@ -121,10 +121,10 @@
                 const term = window.term;
                 term.echo(msg);
             }
-            function exec(code, showCode = true) {
+            function exec(code, show_code = true) {
                 const term = window.term;
                 code = code.replaceAll("\r\n", "\n");
-                term.exec(code, !showCode);
+                term.exec(code, !show_code);
             }
             function clear() {
                 const term = window.term;
@@ -135,7 +135,12 @@
                 for (const el of body.children()) {
                     el.remove();
                 }
-                await main(false);
+                await initConsole(false);
+            }
+            async function getConsoleContent() {
+                const term = window.term;
+                const output = term.get_output();
+                return output;
             }
             function getVariable(name) {
                 const pyodide = window.pyodide;
@@ -150,6 +155,7 @@
                 clear: clear,
                 restart: restart,
                 get_variable: getVariable,
+                get_content: getConsoleContent,
             }
         }
 
@@ -186,7 +192,7 @@
             });
         }
 
-        async function main(initIj = true) {
+        async function initConsole(initIj = true) {
             let indexURL = "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/";
             const urlParams = new URLSearchParams(window.location.search);
             const buildParam = urlParams.get("build");
@@ -422,7 +428,7 @@
                 await initImJoy();
             }
         }
-        window.console_ready = main();
+        window.console_ready = initConsole();
     </script>
 </body>
 
