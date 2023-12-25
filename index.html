@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/jquery.terminal.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/unix_formatting.min.js"></script>
     <script src="https://lib.imjoy.io/imjoy-loader.js"></script>
-    <script src="https://lib.imjoy.io/imjoy-loader.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/css/jquery.terminal.min.css" rel="stylesheet" />
     <!-- add icon -->
     <link rel="icon" href="https://imjoy.io//static/icons/favicon-32x32.png" />
@@ -95,8 +94,10 @@
                 expose_api: true,
                 imjoy_api: {},
             });
-            const api = app.imjoy.api;
-            window.app.imjoy = api;
+            const imjoy_api = app.imjoy.api;
+            window.app.imjoy = imjoy_api;
+            const console = await createApi();
+            window.app.console = console;
             // if you want to let users to load new plugins, add a menu item
             app.addMenuItem({
                 label: "➕ Load Plugin",
@@ -112,29 +113,52 @@
             return app;
         }
 
-        async function exportImjoyRPC(api) {
+        async function createApi() {
             function setup() {
-                api.log("web-python-console is ready.")
+                console.log("web-python-console is ready.")
             }
-            api.export({
+            function echo(msg) {
+                const term = window.term;
+                term.echo(msg);
+            }
+            function exec(code, showCode = true) {
+                const term = window.term;
+                code = code.replaceAll("\r\n", "\n");
+                term.exec(code, !showCode);
+            }
+            function clear() {
+                const term = window.term;
+                term.clear();
+            }
+            function getVariable(name) {
+                const pyodide = window.pyodide;
+                const value = pyodide.globals.get(name);
+                return value;
+            }
+
+            return {
                 setup: setup,
-            })
+                echo: echo,
+                exec: exec,
+                clear: clear,
+                get_variable: getVariable,
+            }
         }
 
         async function initImJoy() {
             // start as an plugin
             if (window.self !== window.top) {
                 const imjoyRPC = await loadImJoyRPC();
-                const api = await imjoyRPC.setupRPC({ name: "web-python-console" });
-                window.app.imjoy = api;
-                await exportImjoyRPC(api);
+                const imjoy_api = await imjoyRPC.setupRPC({ name: "web-python-console" });
+                window.app.imjoy = imjoy_api;
+                const console = await createApi();
+                window.app.console = console;
+                await imjoy_api.export(console)
             } else {
                 // start as an standalone app
                 await setupImJoyApp();
             }
         }
-
-        initImJoy();
 
         function updateButtonLabel() {
             $(".fa-home").map((_, el) => {
@@ -191,7 +215,7 @@
             from pyodide.ffi import to_js
             from pyodide.console import PyodideConsole, repr_shorten, BANNER
             import __main__
-            BANNER = "Welcome to the Pyodide terminal emulator 🐍\\nSupport control through ImJoy API.\\n" + BANNER
+            BANNER = "Welcome to the Pyodide terminal emulator 🐍\\nSupport control through ImJoy API.\\nSee https://github.com/Nanguage/imjoy-web-python-console for detail.\\n" + BANNER
             pyconsole = PyodideConsole(__main__.__dict__)
             import builtins
             async def await_fut(fut):
@@ -367,7 +391,7 @@
             }
 
             let showCode = urlParams.get("show_code")
-            if (showCode === undefined) {
+            if (showCode === undefined || showCode === null) {
                 showCode = true
             } else {
                 showCode = stringToBool(showCode)
@@ -385,6 +409,8 @@
                 term.echo(`--- Running ${flie} ---`)
                 term.exec(text, !showCode);
             }
+
+            initImJoy();
         }
         window.console_ready = main();
     </script>
