@@ -396,20 +396,35 @@
 
             document.pyodideMplTarget = $(".terminal-wrapper")[0]
 
-            function stringToBool(string) {
-                switch (string.toLowerCase().trim()) {
-                    case "true": case "yes": case "1": return true;
-                    case "false": case "no": case "0": case null: return false;
-                    default: return Boolean(string);
+            function toBool(value, default_value = false) {
+                if (value === undefined || value === null) return default_value;
+                if (typeof value === "boolean") return value;
+                if (typeof value === "number") return value !== 0;
+                if (typeof value === "string") {
+                    switch (value.toLowerCase().trim()) {
+                        case "true": case "yes": case "1": return true;
+                        case "false": case "no": case "0": case null: return false;
+                        default: return Boolean(value);
+                    }
                 }
             }
-
-            let showCode = urlParams.get("show_code")
-            if (showCode === undefined || showCode === null) {
-                showCode = true
-            } else {
-                showCode = stringToBool(showCode)
+            term.echo("--- Initializing Pyodide ---")
+            if (initIj) {
+                await initImJoy();
             }
+
+            const installRpc = toBool(searchParams.get("install_rpc"), true);
+            if (installRpc) {
+                term.exec("import micropip; await micropip.install('imjoy-rpc')", true)
+                const api = window.app.imjoy;
+                const url = new URL(window.location.href);
+                const pyPluginUrl = url.origin + url.pathname + "/_py.imjoy.html";
+                const plugin = await api.loadPlugin({ src: pyPluginUrl });
+                console.log(await plugin.hello());
+                console.log("RPC installed.")
+            }
+
+            const showCode = toBool(urlParams.get("show_code"), true);
             const code = urlParams.get("code");
             if (code) {
                 term.echo("--- Running code ---")
@@ -420,13 +435,11 @@
                 const response = await fetch(flie);
                 let text = await response.text();
                 text = text.replaceAll("\r\n", "\n");
+                text = "\n" + text;
                 term.echo(`--- Running ${flie} ---`)
                 term.exec(text, !showCode);
             }
 
-            if (initIj) {
-                await initImJoy();
-            }
         }
         window.console_ready = initConsole();
     </script>

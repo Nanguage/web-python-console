@@ -22,6 +22,7 @@ This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide
 - `code`: the Python code to be executed
 - `file`: the URL of the Python file to be executed
 - `show_code`: whether to show the code in console, default is `true`
+- `install_rpc`: whether to install the `imjoy-rpc` package, default is `true`
 
 ### ImJoy API
 

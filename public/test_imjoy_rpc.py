@@ -1,11 +1,12 @@
-import numpy as np
-
-import micropip
-await micropip.install("imjoy-rpc")
-import imjoy_rpc.rpc
+from imjoy_rpc import api
 
 
-rpc = imjoy_rpc.rpc.RPC(None, None)
-arr = np.random.rand(10)
-obj = rpc._encode(arr)
-print(obj)
+class Plugin:
+    async def setup(self):
+        print("setup")
+
+    async def run(self, ctx):
+        print("run")
+        print(ctx)
+
+api.export(Plugin())
