@@ -192,6 +192,29 @@
             });
         }
 
+        function toBool(value, default_value = false) {
+            if (value === undefined || value === null) return default_value;
+            if (typeof value === "boolean") return value;
+            if (typeof value === "number") return value !== 0;
+            if (typeof value === "string") {
+                switch (value.toLowerCase().trim()) {
+                    case "true": case "yes": case "1": return true;
+                    case "false": case "no": case "0": case null: return false;
+                    default: return Boolean(value);
+                }
+            }
+        }
+
+        async function runFile(url) {
+            const term = window.term;
+            const response = await fetch(url);
+            let text = await response.text();
+            text = text.replaceAll("\r\n", "\n");
+            text = "\n" + text;
+            term.echo(`--- Running ${flie} ---`)
+            term.exec(text, !showCode);
+        }
+
         async function initConsole(initIj = true) {
             let indexURL = "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/";
             const urlParams = new URLSearchParams(window.location.search);
@@ -396,18 +419,6 @@
 
             document.pyodideMplTarget = $(".terminal-wrapper")[0]
 
-            function toBool(value, default_value = false) {
-                if (value === undefined || value === null) return default_value;
-                if (typeof value === "boolean") return value;
-                if (typeof value === "number") return value !== 0;
-                if (typeof value === "string") {
-                    switch (value.toLowerCase().trim()) {
-                        case "true": case "yes": case "1": return true;
-                        case "false": case "no": case "0": case null: return false;
-                        default: return Boolean(value);
-                    }
-                }
-            }
             term.echo("--- Initializing Pyodide ---")
             if (initIj) {
                 await initImJoy();
@@ -432,12 +443,7 @@
             }
             const flie = urlParams.get("file");
             if (flie) {
-                const response = await fetch(flie);
-                let text = await response.text();
-                text = text.replaceAll("\r\n", "\n");
-                text = "\n" + text;
-                term.echo(`--- Running ${flie} ---`)
-                term.exec(text, !showCode);
+                await runFile(flie);
             }
 
         }
