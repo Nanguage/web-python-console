@@ -205,14 +205,76 @@
             }
         }
 
-        async function runFile(url) {
+        async function runFile(url, showCode = true, showSplit = true) {
             const term = window.term;
             const response = await fetch(url);
             let text = await response.text();
             text = text.replaceAll("\r\n", "\n");
             text = "\n" + text;
-            term.echo(`--- Running ${flie} ---`)
+            if (showSplit) {
+                term.echo(`--- Running ${url} ---`)
+            }
             term.exec(text, !showCode);
+        }
+
+        function toJs(value) {
+            if (value instanceof pyodide.ffi.PyProxy) {
+                if (value instanceof pyodide.ffi.PyDict) {
+                    let map = value.toJs();
+                    const obj = {};
+                    for (const [key, value] of map) {
+                        obj[key] = toJs(value);
+                    }
+                    return obj;
+                } else {
+                    return value.toJs();
+                }
+            } else {
+                return value;
+            }
+        }
+
+        class ImjoyApiWrapper {
+            constructor(imjoy_api) {
+                this.imjoy_api = imjoy_api;
+                Object.assign(this, imjoy_api);
+                this.getWindow = this.getWindowOveride;
+                this.createWindow = this.createWindowOveride;
+            }
+
+            async getWindowOveride() {
+                const window = await this.imjoy_api.getWindow();
+                const windowWrapper = new PluginWrapper(window);
+                return windowWrapper;
+            }
+
+            async createWindowOveride(config) {
+                const window = await this.imjoy_api.createWindow(config);
+                const windowWrapper = new PluginWrapper(window);
+                return windowWrapper;
+            }
+        }
+
+        class PluginWrapper {
+            constructor(plugin) {
+                Object.keys(plugin).forEach(key => {
+                    if (typeof plugin[key] === 'function') {
+                        this[key] = (...args) => {
+                            const processedArgs = args.map(arg => this.toImjoyObj(arg));
+                            return plugin[key](...processedArgs);
+                        };
+                    } else {
+                        this[key] = plugin[key];
+                    }
+                });
+            }
+
+            toImjoyObj(obj) {
+                const pyodide = window.pyodide;
+                const imjoy_encode = pyodide.globals.get("imjoy_encode");
+                const res = toJs(imjoy_encode(obj));
+                return res;
+            }
         }
 
         async function initConsole(initIj = true) {
@@ -420,6 +482,7 @@
             document.pyodideMplTarget = $(".terminal-wrapper")[0]
 
             term.echo("--- Initializing Pyodide ---")
+            term.pause();
             if (initIj) {
                 await initImJoy();
             }
@@ -427,13 +490,12 @@
             const installRpc = toBool(searchParams.get("install_rpc"), true);
             if (installRpc) {
                 term.exec("import micropip; await micropip.install('imjoy-rpc')", true)
-                const api = window.app.imjoy;
-                const url = new URL(window.location.href);
-                const pyPluginUrl = url.origin + url.pathname + "/_py.imjoy.html";
-                const plugin = await api.loadPlugin({ src: pyPluginUrl });
-                console.log(await plugin.hello());
-                console.log("RPC installed.")
+                const currentUrl = new URL(window.location.href);
+                const libUrl = currentUrl.origin + currentUrl.pathname + "/imjoy_encode.py";
+                await runFile(libUrl, false, false)
+                pyodide.globals.set("api", new ImjoyApiWrapper(window.app.imjoy));
             }
+            term.resume();
 
             const showCode = toBool(urlParams.get("show_code"), true);
             const code = urlParams.get("code");
@@ -443,7 +505,7 @@
             }
             const flie = urlParams.get("file");
             if (flie) {
-                await runFile(flie);
+                await runFile(flie, showCode);
             }
 
         }
