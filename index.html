@@ -242,8 +242,8 @@
                 this.createWindow = this.createWindowOveride;
             }
 
-            async getWindowOveride() {
-                const window = await this.imjoy_api.getWindow();
+            async getWindowOveride(config) {
+                const window = await this.imjoy_api.getWindow(config);
                 const windowWrapper = new PluginWrapper(window);
                 return windowWrapper;
             }
