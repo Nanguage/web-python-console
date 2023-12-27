@@ -1,5 +1,9 @@
 # Web Python Console 🐍
 
+<a href="https://nanguage.github.io/imjoy-python-console/">
+    <img src="https://img.shields.io/badge/online-demo-blue" />
+</a>
+
 A web based Python console powered by [Pyodide](https://github.com/pyodide/pyodide) and [ImJoy](https://imjoy.io/#/).
 It allows you to run Python code in the browser, and you can also directly execute code / python file from URL.
 
@@ -23,6 +27,12 @@ This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide
 - `file`: the URL of the Python file to be executed
 - `show_code`: whether to show the code in console, default is `true`
 - `install_rpc`: whether to install the `imjoy-rpc` package, default is `true`
+
+#### Demos
+
++ [Sin(x) curve ASCII](https://nanguage.github.io/imjoy-python-console/?file=https://nanguage.github.io/imjoy-python-console/test.py)
++ [matplotlib](https://nanguage.github.io/imjoy-python-console/?file=https://nanguage.github.io/imjoy-python-console/test_matplotlib.py)
++ [altair](https://nanguage.github.io/imjoy-python-console/?file=https://nanguage.github.io/imjoy-python-console/test_altair.py)
 
 ### Plugin's API
 
