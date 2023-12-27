@@ -1,6 +1,6 @@
 # Web Python Console 🐍
 
-<a href="https://nanguage.github.io/imjoy-python-console/">
+<a href="https://nanguage.github.io/web-python-console/">
     <img src="https://img.shields.io/badge/online-demo-blue" />
 </a>
 
@@ -30,9 +30,9 @@ This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide
 
 #### Demos
 
-+ [Sin(x) curve ASCII](https://nanguage.github.io/imjoy-python-console/?file=https://nanguage.github.io/imjoy-python-console/test.py)
-+ [matplotlib](https://nanguage.github.io/imjoy-python-console/?file=https://nanguage.github.io/imjoy-python-console/test_matplotlib.py)
-+ [altair](https://nanguage.github.io/imjoy-python-console/?file=https://nanguage.github.io/imjoy-python-console/test_altair.py)
++ [Sin(x) curve ASCII](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test.py)
++ [matplotlib](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_matplotlib.py)
++ [altair](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_altair.py)
 
 ### Plugin's API
 
@@ -79,3 +79,15 @@ await api.restart()
 # insert HTML as an iframe
 await api.insertHtml("<h1>Hello World</h1>", width="100%", height="100px")
 ```
+
+### Integreate with BioImage.IO ChatBot
+
+Install and run the following plugin to register the extension for BioImage.IO ChatBot:
+
+```
+https://nanguage.github.io/web-python-console/chatbot-launcher.imjoy.html
+```
+
+A demo:
+
+![demo](./chatbot_demo_1.png)

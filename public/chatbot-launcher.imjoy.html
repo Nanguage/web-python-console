@@ -1,0 +1,92 @@
+<docs>
+[TODO: write documentation for this plugin.]
+</docs>
+
+<config lang="json">
+{
+  "name": "chatbot-web-python-console",
+  "type": "web-worker",
+  "tags": [],
+  "ui": "",
+  "version": "0.1.0",
+  "cover": "",
+  "description": "Register bioengine web client to chatbot",
+  "icon": "extension",
+  "inputs": null,
+  "outputs": null,
+  "api_version": "0.1.8",
+  "env": "",
+  "permissions": [],
+  "requirements": [],
+  "dependencies": []
+}
+</config>
+
+<script lang="javascript">
+class ImJoyPlugin {
+  async setup() {
+    this.chatbot = await api.getWindow("BioImage.IO Chatbot")
+    if (this.chatbot) {
+      await this.registerExtensions()
+    }
+  }
+
+  async registerExtensions() {
+    const chatbot = this.chatbot
+    await chatbot.registerExtension({
+      _rintf: true,
+      name: "runPythonCode",
+      description: "Run python code in the python-web-console",
+      async get_schema() {
+        return {
+          type: "object",
+          title: "RunPythonCode",
+          description: "Run python code in the python-web-console",
+          properties: {
+            code: {
+              type: "string",
+              description: "The Python code to run",
+            },
+            result_variable: {
+              type: "string",
+              description: "The variable name to store the result, if not needed, leave it empty",
+            },
+          },
+        };
+      },
+      async execute(config) {
+        let pycon = await api.getWindow("web-python-console");
+        if (!pycon) {
+          pycon = await api.createWindow({
+            src: "https://nanguage.github.io/web-python-console/",
+            name: "web-python-console",
+          });
+        }
+        const code = config.code
+        await pycon.exec(code)
+        const result_variable = config.result_variable
+        if (result_variable) {
+          const result = await pycon.get_variable(result_variable)
+          return result
+        }
+      },
+    })
+
+    api.log('initialized')
+  }
+
+  async run(ctx) {
+    let chatbot = await api.getWindow("BioImage.IO Chatbot");
+    if (!chatbot) {
+      chatbot = await api.createWindow({
+        src: "https://staging.chat.bioimage.io/public/apps/bioimageio-chatbot-client/index",
+        name: "BioImage.IO Chatbot",
+      });
+    }
+    this.chatbot = chatbot
+    await this.registerExtensions()
+  }
+}
+
+api.export(new ImJoyPlugin())
+</script>
