@@ -261,7 +261,12 @@
                     if (typeof plugin[key] === 'function') {
                         this[key] = (...args) => {
                             const processedArgs = args.map(arg => this.toImjoyObj(arg));
-                            return plugin[key](...processedArgs);
+                            const res = plugin[key](...processedArgs);
+                            if (res instanceof Promise) {
+                                return res.then(r => this.toPyObj(r));
+                            } else {
+                                return this.toPyObj(res);
+                            }
                         };
                     } else {
                         this[key] = plugin[key];
@@ -273,6 +278,13 @@
                 const pyodide = window.pyodide;
                 const imjoy_encode = pyodide.globals.get("imjoy_encode");
                 const res = toJs(imjoy_encode(obj));
+                return res;
+            }
+
+            toPyObj(obj) {
+                const pyodide = window.pyodide;
+                const imjoy_decode = pyodide.globals.get("imjoy_decode");
+                const res = imjoy_decode(pyodide.toPy(obj));
                 return res;
             }
         }
