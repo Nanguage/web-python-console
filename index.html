@@ -1,0 +1,546 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/jquery.terminal.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/unix_formatting.min.js"></script>
+    <script src="https://lib.imjoy.io/imjoy-loader.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/css/jquery.terminal.min.css" rel="stylesheet" />
+    <!-- add icon -->
+    <link rel="icon" href="https://imjoy.io//static/icons/favicon-32x32.png" />
+    <!-- add title -->
+    <title>web-python-console</title>
+    <style>
+        :root {
+            --size: 1.4;
+            --font: Consolas;
+        }
+
+        .terminal {
+            --size: 1.5;
+            --color: rgba(255, 255, 255, 0.8);
+        }
+
+        .noblink {
+            --animation: terminal-none;
+        }
+
+        body {
+            background-color: black;
+        }
+
+        #loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            border: 3px solid rgba(172, 237, 255, 0.5);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            -webkit-animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+
+        @-webkit-keyframes spin {
+            to {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+
+        #menu-container {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading"></div>
+    <div id="menu-container"></div>
+    <div id="window-container" style="height:0px;"></div>
+    <script>
+        "use strict";
+
+        window.app = {};
+
+        function sleep(s) {
+            return new Promise((resolve) => setTimeout(resolve, s));
+        }
+
+        async function setupImJoyApp() {
+            const app = await loadImJoyBasicApp({
+                name: "web-python-console",
+                process_url_query: true,
+                show_window_title: false,
+                show_progress_bar: true,
+                show_empty_window: true,
+                menu_style: { position: "absolute", right: 0, top: "2px" },
+                window_style: { width: "100%", height: "100%" },
+                main_container: null,
+                menu_container: "menu-container",
+                window_manager_container: null,
+                expose_api: true,
+                imjoy_api: {},
+            });
+            const imjoy_api = app.imjoy.api;
+            window.app.imjoy = imjoy_api;
+            const console = await createApi();
+            window.app.console = console;
+            // if you want to let users to load new plugins, add a menu item
+            app.addMenuItem({
+                label: "➕ Load Plugin",
+                callback() {
+                    const uri = prompt(
+                        `Please type a ImJoy plugin URL`,
+                        "https://github.com/imjoy-team/imjoy-plugins/blob/master/repository/ImageAnnotator.imjoy.html"
+                    );
+                    if (uri) app.loadPlugin(uri);
+                },
+            });
+
+            return app;
+        }
+
+        async function restart() {
+            const body = $("body");
+            for (const el of body.children()) {
+                el.remove();
+            }
+            await initConsole(false);
+        }
+
+        async function createApi() {
+            function setup() {
+                console.log("web-python-console is ready.")
+            }
+            function echo(msg) {
+                const term = window.term;
+                term.echo(msg);
+            }
+            function exec(code, show_code = true) {
+                const term = window.term;
+                code = code.replaceAll("\r\n", "\n");
+                term.exec(code, !show_code);
+            }
+            function clear() {
+                const term = window.term;
+                term.clear();
+            }
+            async function getConsoleContent() {
+                const term = window.term;
+                const output = term.get_output();
+                return output;
+            }
+            function getVariable(name) {
+                const pyodide = window.pyodide;
+                const value = pyodide.globals.get(name);
+                const res = toImjoyObj(value);
+                return res;
+            }
+
+            return {
+                setup: setup,
+                echo: echo,
+                exec: exec,
+                clear: clear,
+                restart: restart,
+                get_variable: getVariable,
+                get_content: getConsoleContent,
+            }
+        }
+
+        async function initImJoy() {
+            // start as an plugin
+            if (window.self !== window.top) {
+                const imjoyRPC = await loadImJoyRPC();
+                const imjoy_api = await imjoyRPC.setupRPC({ name: "web-python-console" });
+                window.app.imjoy = imjoy_api;
+                const console = await createApi();
+                window.app.console = console;
+                await imjoy_api.export(console)
+            } else {
+                // start as an standalone app
+                await setupImJoyApp();
+            }
+        }
+
+        function updateButtonLabel() {
+            $(".fa-home").map((_, el) => {
+                el.innerHTML = "Home";
+            });
+            $(".fa-arrow-left").map((_, el) => {
+                el.innerHTML = "Back";
+            });
+            $(".fa-arrow-right").map((_, el) => {
+                el.innerHTML = "Forward";
+            });
+            $(".fa-arrows").map((_, el) => {
+                el.innerHTML = "Pan";
+            });
+            $(".fa-search-plus").map((_, el) => {
+                el.innerHTML = "Zoom";
+            });
+        }
+
+        function toBool(value, default_value = false) {
+            if (value === undefined || value === null) return default_value;
+            if (typeof value === "boolean") return value;
+            if (typeof value === "number") return value !== 0;
+            if (typeof value === "string") {
+                switch (value.toLowerCase().trim()) {
+                    case "true": case "yes": case "1": return true;
+                    case "false": case "no": case "0": case null: return false;
+                    default: return Boolean(value);
+                }
+            }
+        }
+
+        async function runFile(url, showCode = true, showSplit = true) {
+            const term = window.term;
+            const response = await fetch(url);
+            let text = await response.text();
+            text = text.replaceAll("\r\n", "\n");
+            text = "\n" + text;
+            if (showSplit) {
+                term.echo(`--- Running ${url} ---`)
+            }
+            term.exec(text, !showCode);
+        }
+
+        function toJs(value) {
+            if (value instanceof pyodide.ffi.PyProxy) {
+                if (value instanceof pyodide.ffi.PyDict) {
+                    let map = value.toJs();
+                    const obj = {};
+                    for (const [key, value] of map) {
+                        obj[key] = toJs(value);
+                    }
+                    return obj;
+                } else {
+                    return value.toJs();
+                }
+            } else {
+                return value;
+            }
+        }
+
+        class ImjoyApiWrapper {
+            constructor(imjoy_api) {
+                this.imjoy_api = imjoy_api;
+                Object.assign(this, imjoy_api);
+                this.getWindow = this.getWindowOveride;
+                this.createWindow = this.createWindowOveride;
+            }
+
+            async getWindowOveride(config) {
+                const window = await this.imjoy_api.getWindow(config);
+                const windowWrapper = new PluginWrapper(window);
+                return windowWrapper;
+            }
+
+            async createWindowOveride(config) {
+                const window = await this.imjoy_api.createWindow(config);
+                const windowWrapper = new PluginWrapper(window);
+                return windowWrapper;
+            }
+
+            async restart() {
+                await restart();
+            }
+
+            async insertHtml(htmlSrc, width = "50%", height = "400px") {
+                const term = window.term;
+                const encoded = encodeURIComponent(htmlSrc);
+                const iframe = document.createElement("iframe");
+                iframe.src = 'data:text/html;charset=utf-8,' + encoded;
+                iframe.style.width = width;
+                iframe.style.height = height;
+                iframe.style.resize = 'both'
+                iframe.style.overflow = 'auto'
+                term.echo(iframe);
+            }
+        }
+
+        function toImjoyObj(obj) {
+            const pyodide = window.pyodide;
+            const imjoy_encode = pyodide.globals.get("imjoy_encode");
+            const res = toJs(imjoy_encode(obj));
+            return res;
+        }
+
+        function toPyObj(obj) {
+            const pyodide = window.pyodide;
+            const imjoy_decode = pyodide.globals.get("imjoy_decode");
+            const res = imjoy_decode(pyodide.toPy(obj));
+            return res;
+        }
+
+        class PluginWrapper {
+            constructor(plugin) {
+                Object.keys(plugin).forEach(key => {
+                    if (typeof plugin[key] === 'function') {
+                        this[key] = (...args) => {
+                            const processedArgs = args.map(arg => toImjoyObj(arg));
+                            const res = plugin[key](...processedArgs);
+                            if (res instanceof Promise) {
+                                return res.then(r => toPyObj(r));
+                            } else {
+                                return toPyObj(res);
+                            }
+                        };
+                    } else {
+                        this[key] = plugin[key];
+                    }
+                });
+            }
+        }
+
+        async function initConsole(initIj = true) {
+            let indexURL = "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/";
+            const urlParams = new URLSearchParams(window.location.search);
+            const buildParam = urlParams.get("build");
+            if (buildParam) {
+                if (["full", "debug", "pyc"].includes(buildParam)) {
+                    indexURL = indexURL.replace(
+                        "/full/",
+                        "/" + urlParams.get("build") + "/",
+                    );
+                } else {
+                    console.warn(
+                        'Invalid URL parameter: build="' +
+                        buildParam +
+                        '". Using default "full".',
+                    );
+                }
+            }
+            const { loadPyodide } = await import(indexURL + "pyodide.mjs");
+            // to facilitate debugging
+            globalThis.loadPyodide = loadPyodide;
+
+            let term;
+            globalThis.pyodide = await loadPyodide({
+                stdin: () => {
+                    let result = prompt();
+                    echo(result);
+                    return result;
+                },
+            });
+            let namespace = pyodide.globals.get("dict")();
+            pyodide.runPython(
+                `
+            import sys
+            from pyodide.ffi import to_js
+            from pyodide.console import PyodideConsole, repr_shorten, BANNER
+            import __main__
+            BANNER = "Welcome to the Pyodide terminal emulator 🐍\\nSupport control through ImJoy API.\\nSee https://github.com/Nanguage/imjoy-web-python-console for detail.\\n" + BANNER
+            pyconsole = PyodideConsole(__main__.__dict__)
+            import builtins
+            async def await_fut(fut):
+              res = await fut
+              if res is not None:
+                builtins._ = res
+              return to_js([res], depth=1)
+            def clear_console():
+              pyconsole.buffer = []
+        `,
+                { globals: namespace },
+            );
+            let repr_shorten = namespace.get("repr_shorten");
+            let banner = namespace.get("BANNER");
+            let await_fut = namespace.get("await_fut");
+            let pyconsole = namespace.get("pyconsole");
+            let clear_console = namespace.get("clear_console");
+            const echo = (msg, ...opts) =>
+                term.echo(
+                    msg
+                        .replaceAll("]]", "&rsqb;&rsqb;")
+                        .replaceAll("[[", "&lsqb;&lsqb;"),
+                    ...opts,
+                );
+            namespace.destroy();
+
+            let ps1 = ">>> ",
+                ps2 = "... ";
+
+            async function lock() {
+                let resolve;
+                let ready = term.ready;
+                term.ready = new Promise((res) => (resolve = res));
+                await ready;
+                return resolve;
+            }
+
+            async function interpreter(command) {
+                let unlock = await lock();
+                term.pause();
+                // multiline should be split (useful when pasting)
+                for (const c of command.split("\n")) {
+                    const escaped = c.replaceAll(/\u00a0/g, " ");
+                    let fut = pyconsole.push(escaped);
+                    term.set_prompt(fut.syntax_check === "incomplete" ? ps2 : ps1);
+                    switch (fut.syntax_check) {
+                        case "syntax-error":
+                            term.error(fut.formatted_error.trimEnd());
+                            continue;
+                        case "incomplete":
+                            continue;
+                        case "complete":
+                            break;
+                        default:
+                            throw new Error(`Unexpected type ${ty}`);
+                    }
+                    // In JavaScript, await automatically also awaits any results of
+                    // awaits, so if an async function returns a future, it will await
+                    // the inner future too. This is not what we want so we
+                    // temporarily put it into a list to protect it.
+                    let wrapped = await_fut(fut);
+                    // complete case, get result / error and print it.
+                    try {
+                        const mplShow = escaped.includes("plt.show()");
+                        let mplTarget = null;
+                        if (mplShow) {
+                            term.echo();
+                            const outputs = $(".terminal-output")[0].children
+                            mplTarget = outputs[outputs.length - 1]
+                            document.pyodideMplTarget = mplTarget
+                        }
+                        // Real execution happens here.
+                        let [value] = await wrapped;
+                        if (mplShow) {
+                            if (mplTarget) {
+                                mplTarget.children[0].style.display = "none";
+                                if (mplTarget.children.length > 1) {
+                                    mplTarget.children[1].removeAttribute("id")
+                                }
+                            }
+                            updateButtonLabel();
+                        }
+                        if (value !== undefined) {
+                            echo(
+                                repr_shorten.callKwargs(value, {
+                                    separator: "\n<long output truncated>\n",
+                                }),
+                            );
+                        }
+                        if (value instanceof pyodide.ffi.PyProxy) {
+                            value.destroy();
+                        }
+                    } catch (e) {
+                        if (e.constructor.name === "PythonError") {
+                            const message = fut.formatted_error || e.message;
+                            term.error(message.trimEnd());
+                        } else {
+                            throw e;
+                        }
+                    } finally {
+                        fut.destroy();
+                        wrapped.destroy();
+                    }
+                }
+                term.resume();
+                await sleep(10);
+                unlock();
+            }
+
+            term = $("body").terminal(interpreter, {
+                greetings: banner,
+                prompt: ps1,
+                completionEscape: false,
+                completion: function (command, callback) {
+                    callback(pyconsole.complete(command).toJs()[0]);
+                },
+                keymap: {
+                    "CTRL+C": async function (event, original) {
+                        clear_console();
+                        term.enter();
+                        echo("KeyboardInterrupt");
+                        term.set_command("");
+                        term.set_prompt(ps1);
+                    },
+                    TAB: (event, original) => {
+                        const command = term.before_cursor();
+                        // Disable completion for whitespaces.
+                        if (command.trim() === "") {
+                            term.insert("\t");
+                            return false;
+                        }
+                        return original(event);
+                    },
+                },
+            });
+            window.term = term;
+            pyconsole.stdout_callback = (s) => echo(s, { newline: false });
+            pyconsole.stderr_callback = (s) => {
+                term.error(s.trimEnd());
+            };
+            term.ready = Promise.resolve();
+            pyodide._api.on_fatal = async (e) => {
+                if (e.name === "Exit") {
+                    term.error(e);
+                    term.error("Pyodide exited and can no longer be used.");
+                } else {
+                    term.error(
+                        "Pyodide has suffered a fatal error. Please report this to the Pyodide maintainers.",
+                    );
+                    term.error("The cause of the fatal error was:");
+                    term.error(e);
+                    term.error("Look in the browser console for more details.");
+                }
+                await term.ready;
+                term.pause();
+                await sleep(15);
+                term.pause();
+            };
+
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.has("noblink")) {
+                $(".cmd-cursor").addClass("noblink");
+            }
+
+            document.pyodideMplTarget = $(".terminal-wrapper")[0]
+
+            term.echo("--- Initializing Pyodide ---")
+            term.pause();
+            if (initIj) {
+                await initImJoy();
+            }
+
+            const installRpc = toBool(searchParams.get("install_rpc"), true);
+            if (installRpc) {
+                term.exec("import micropip; await micropip.install('imjoy-rpc')", true)
+                const currentUrl = new URL(window.location.href);
+                const libUrl = currentUrl.origin + currentUrl.pathname + "/imjoy_encode.py";
+                await runFile(libUrl, false, false)
+                pyodide.globals.set("api", new ImjoyApiWrapper(window.app.imjoy));
+            }
+            term.resume();
+
+            const showCode = toBool(urlParams.get("show_code"), true);
+            const code = urlParams.get("code");
+            if (code) {
+                term.echo("--- Running code ---")
+                term.exec(code, !showCode);
+            }
+            const flie = urlParams.get("file");
+            if (flie) {
+                await runFile(flie, showCode);
+            }
+
+        }
+        window.console_ready = initConsole();
+    </script>
+</body>
+
+</html>
