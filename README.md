@@ -24,7 +24,7 @@ This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide
 - `show_code`: whether to show the code in console, default is `true`
 - `install_rpc`: whether to install the `imjoy-rpc` package, default is `true`
 
-### ImJoy API
+### Plugin's API
 
 The console is integrated with ImJoy, you can use the ImJoy API to control the console.
 
@@ -35,3 +35,37 @@ The console is integrated with ImJoy, you can use the ImJoy API to control the c
 | `.exec` | Execute Python code | `code: string; show_code: bool = true` |
 | `.restart` | Restart the console | |
 | `.get_content` | Get the content of the console | |
+| `.get_variable` | Get a variable from the console | `name: string` |
+
+### Using ImJoy API in the console
+
+You can also control other ImJoy plugins from the console using ImJoy API.
+For example, you can use the following code to control the [ImageJ.JS](https://ij.imjoy.io):
+
+
+```python
+import numpy as np
+
+arr = np.random.randint(0, 255, (10,10), dtype=np.uint8)
+
+ij = await api.createWindow(src="https://ij.imjoy.io")
+await ij.viewImage(arr)
+```
+
+The complete ImJoy API can be found [here](https://imjoy.io/docs/#/api?id=api-functions).
+
+#### Additonal APIs
+
+| API | Description | Parameters |
+| --- | --- | --- |
+| `api.restart` | Restart the console | |
+| `api.insertHtml` | Insert HTML to the console | `html: string; width: string; height: string` |
+
+Usage example:
+
+```python
+# restart the console
+await api.restart()
+# insert HTML as an iframe
+await api.insertHtml("<h1>Hello World</h1>", width="100%", height="100px")
+```

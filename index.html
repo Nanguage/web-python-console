@@ -113,6 +113,14 @@
             return app;
         }
 
+        async function restart() {
+            const body = $("body");
+            for (const el of body.children()) {
+                el.remove();
+            }
+            await initConsole(false);
+        }
+
         async function createApi() {
             function setup() {
                 console.log("web-python-console is ready.")
@@ -130,13 +138,6 @@
                 const term = window.term;
                 term.clear();
             }
-            async function restart() {
-                const body = $("body");
-                for (const el of body.children()) {
-                    el.remove();
-                }
-                await initConsole(false);
-            }
             async function getConsoleContent() {
                 const term = window.term;
                 const output = term.get_output();
@@ -145,7 +146,8 @@
             function getVariable(name) {
                 const pyodide = window.pyodide;
                 const value = pyodide.globals.get(name);
-                return value;
+                const res = toImjoyObj(value);
+                return res;
             }
 
             return {
@@ -253,6 +255,36 @@
                 const windowWrapper = new PluginWrapper(window);
                 return windowWrapper;
             }
+
+            async restart() {
+                await restart();
+            }
+
+            async insertHtml(htmlSrc, width = "50%", height = "400px") {
+                const term = window.term;
+                const encoded = encodeURIComponent(htmlSrc);
+                const iframe = document.createElement("iframe");
+                iframe.src = 'data:text/html;charset=utf-8,' + encoded;
+                iframe.style.width = width;
+                iframe.style.height = height;
+                iframe.style.resize = 'both'
+                iframe.style.overflow = 'auto'
+                term.echo(iframe);
+            }
+        }
+
+        function toImjoyObj(obj) {
+            const pyodide = window.pyodide;
+            const imjoy_encode = pyodide.globals.get("imjoy_encode");
+            const res = toJs(imjoy_encode(obj));
+            return res;
+        }
+
+        function toPyObj(obj) {
+            const pyodide = window.pyodide;
+            const imjoy_decode = pyodide.globals.get("imjoy_decode");
+            const res = imjoy_decode(pyodide.toPy(obj));
+            return res;
         }
 
         class PluginWrapper {
@@ -260,32 +292,18 @@
                 Object.keys(plugin).forEach(key => {
                     if (typeof plugin[key] === 'function') {
                         this[key] = (...args) => {
-                            const processedArgs = args.map(arg => this.toImjoyObj(arg));
+                            const processedArgs = args.map(arg => toImjoyObj(arg));
                             const res = plugin[key](...processedArgs);
                             if (res instanceof Promise) {
-                                return res.then(r => this.toPyObj(r));
+                                return res.then(r => toPyObj(r));
                             } else {
-                                return this.toPyObj(res);
+                                return toPyObj(res);
                             }
                         };
                     } else {
                         this[key] = plugin[key];
                     }
                 });
-            }
-
-            toImjoyObj(obj) {
-                const pyodide = window.pyodide;
-                const imjoy_encode = pyodide.globals.get("imjoy_encode");
-                const res = toJs(imjoy_encode(obj));
-                return res;
-            }
-
-            toPyObj(obj) {
-                const pyodide = window.pyodide;
-                const imjoy_decode = pyodide.globals.get("imjoy_decode");
-                const res = imjoy_decode(pyodide.toPy(obj));
-                return res;
             }
         }
 
