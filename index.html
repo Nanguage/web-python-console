@@ -7,7 +7,11 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/jquery.terminal.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/js/unix_formatting.min.js"></script>
     <script src="https://lib.imjoy.io/imjoy-loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/prism.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-python.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/jquery.terminal@2.35.2/css/jquery.terminal.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css" rel="stylesheet" />
     <!-- add icon -->
     <link rel="icon" href="https://imjoy.io//static/icons/favicon-32x32.png" />
     <!-- add title -->
@@ -590,6 +594,8 @@
                 pyodide.globals.set("api", new ImjoyApiWrapper(window.app.imjoy));
             }
             term.resume();
+
+            $.terminal.syntax('python')
 
             const showCode = toBool(urlParams.get("show_code"), true);
             const code = urlParams.get("code");
