@@ -3,9 +3,18 @@
 <a href="https://nanguage.github.io/web-python-console/">
     <img src="https://img.shields.io/badge/online-demo-blue" />
 </a>
+<a href="https://imjoy.io/lite?plugin=https://nanguage.github.io/web-python-console/python-editor.imjoy.html">
+    <img src="https://img.shields.io/badge/demo-with_editor-blue" />
+</a>
 
 A web based Python console powered by [Pyodide](https://github.com/pyodide/pyodide) and [ImJoy](https://imjoy.io/#/).
 It allows you to run Python code in the browser, and you can also directly execute code / python file from URL.
+
+![demo](./editor_demo.png)
+
+Online demo:
+- [Python Console](https://nanguage.github.io/web-python-console/)
+- [Python Console with Editor](https://imjoy.io/lite?plugin=https://nanguage.github.io/web-python-console/python-editor.imjoy.html)
 
 ## Features
 

@@ -1,0 +1,113 @@
+<config lang="json">
+{
+  "name": "PyEditor",
+  "type": "web-worker",
+  "tags": [],
+  "ui": "",
+  "version": "0.1.2",
+  "cover": "",
+  "description": "A Script Editor for Python",
+  "icon": "extension",
+  "inputs": null,
+  "outputs": null,
+  "api_version": "0.1.8",
+  "env": "",
+  "permissions": [],
+  "requirements": [],
+  "dependencies": []
+}
+</config>
+
+<script lang="javascript">
+class ImJoyPlugin {
+  async setup() {
+    api.log('initialized')
+    let pycon = await api.getWindow("web-python-console")
+    if (!pycon) {
+      pycon = await api.createWindow({
+        src: 'https://nanguage.github.io/web-python-console/',
+        name: 'web-python-console',
+        w: 30,
+        h: 40,
+      })
+    }
+    this.pycon = pycon
+  }
+
+  async run(ctx) {
+    let pluginInEditor, stopped, editorWindow;
+    const config = {lang: 'python'}
+    const pycon = this.pycon
+    config.templates = [
+      {
+        name: "Matplotlib demo",
+        url: "https://nanguage.github.io/web-python-console/test_matplotlib.py",
+        lang: 'python',
+      },
+      {
+        name: "Altair plot demo",
+        url: "https://nanguage.github.io/web-python-console/test_altair.py",
+        lang: 'python',
+      },
+    ]
+    config.ui_elements = {
+      save: {
+        _rintf: true,
+        type: 'button',
+        label: "Save",
+        visible: false,
+        icon: "content-save",
+        callback(content) {
+          console.log(content)
+        }
+      },
+      run: {
+          _rintf: true,
+          type: 'button',
+          label: "Run",
+          icon: "play",
+          visible: true,
+          shortcut: 'Shift-Enter',
+          async callback(content) {
+            try {
+              editorWindow.setLoader(true);
+              api.showProgress(0);
+              pycon.exec(content)
+            } catch (e) {
+              api.showMessage("Failed to run script, error: " + e.toString());
+            } finally {
+              editorWindow.setLoader(false);
+              api.showProgress(100);
+            }
+          }
+      },
+      export: {
+          _rintf: true,
+          type: 'button',
+          label: "Export",
+          icon: "file-download-outline",
+          visible: true,
+          async callback(content) {
+              const isHTML = content.trim().startsWith('<')
+              if(isHTML){
+                const fileName = (pluginInEditor && pluginInEditor.config.name && pluginInEditor.config.name + '.imjoy.html') || config.name + '.imjoy.html' || "myPlugin.imjoy.html";
+                await api.exportFile(content, fileName);
+              }
+              else{
+                const fileName = await api.prompt("Save as", "script.py")
+                if(fileName) await api.exportFile(content, fileName);
+              }
+          }
+      }
+    }
+    editorWindow = await api.createWindow({
+        src: 'https://if.imjoy.io',
+        name: (ctx && ctx.data && ctx.data.name) ||'Python Script Editor',
+        config,
+        data: {code: ctx && ctx.data && ctx.data.code}
+    })
+  }
+}
+
+api.export(new ImJoyPlugin())
+</script>
