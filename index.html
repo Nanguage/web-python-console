@@ -92,7 +92,11 @@
                 menu_container: "menu-container",
                 window_manager_container: null,
                 expose_api: true,
-                imjoy_api: {},
+                imjoy_api: {
+                    async getConsole(caller, config) {
+                        return createApi();
+                    }
+                },
             });
             const imjoy_api = app.imjoy.api;
             window.app.imjoy = imjoy_api;
@@ -110,6 +114,38 @@
                 },
             });
 
+            app.addMenuItem({
+                label: "📝 Edit Code",
+                async callback() {
+                    let plugin = null;
+                    app.loadedPlugins.forEach((p) => {
+                        if (p.config.name === "PyEditor") {
+                            plugin = p;
+                        }
+                    });
+                    if (!plugin) {
+                        plugin = await app.loadPlugin(
+                            "https://nanguage.github.io/web-python-console/python-editor.imjoy.html"
+                        );
+                    }
+                    await app.runPlugin(plugin);
+                }
+            });
+
+            app.addMenuItem({
+                label: "📂 Mount Local Folder",
+                async callback() {
+                    const mountPoint = prompt(
+                        `Please type a mount point`,
+                        "/mount_dir"
+                    );
+                    if (mountPoint) {
+                        await mountNativeFs(mountPoint);
+                        await imjoy_api.showMessage(`Mounted at ${mountPoint}`);
+                    }
+                }
+            })
+
             return app;
         }
 
@@ -119,6 +155,19 @@
                 el.remove();
             }
             await initConsole(false);
+        }
+
+        async function mountNativeFs(mountPoint = "/mount_dir") {
+            const pyodide = window.pyodide;
+            const dirHandle = await showDirectoryPicker();
+            if ((await dirHandle.queryPermission({ mode: "readwrite" })) !== "granted") {
+                if (
+                    (await dirHandle.requestPermission({ mode: "readwrite" })) !== "granted"
+                ) {
+                    throw Error("Unable to read and write directory");
+                }
+            }
+            const nativefs = await pyodide.mountNativeFS(mountPoint, dirHandle);
         }
 
         async function createApi() {
@@ -149,15 +198,26 @@
                 const res = toImjoyObj(value);
                 return res;
             }
+            function setVariable(name, value) {
+                const pyodide = window.pyodide;
+                const res = toPyObj(value);
+                pyodide.globals.set(name, res);
+            }
+            function mount_native_fs(mount_point = "/mount_dir") {
+                return mountNativeFs(mount_point);
+            }
 
             return {
+                _rintf: true,
                 setup: setup,
                 echo: echo,
                 exec: exec,
                 clear: clear,
                 restart: restart,
                 get_variable: getVariable,
+                set_variable: setVariable,
                 get_content: getConsoleContent,
+                mount_native_fs: mount_native_fs,
             }
         }
 
@@ -270,6 +330,10 @@
                 iframe.style.resize = 'both'
                 iframe.style.overflow = 'auto'
                 term.echo(iframe);
+            }
+
+            async mountNativeFs(mountPoint = "/mount_dir") {
+                await mountNativeFs(mountPoint);
             }
         }
 

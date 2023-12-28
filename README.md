@@ -24,6 +24,8 @@ Online demo:
 - Integrate with ImJoy ecosystem
     + Control by ImJoy plugins
     + Control other ImJoy plugins
+- Editor with Python syntax highlighting.
+- Support mounting native file system to the console.
 
 This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide/blob/main/src/templates/console.html).
 
@@ -55,6 +57,8 @@ The console is integrated with ImJoy, you can use the ImJoy API to control the c
 | `.restart` | Restart the console | |
 | `.get_content` | Get the content of the console | |
 | `.get_variable` | Get a variable from the console | `name: string` |
+| `.set_variable` | Set a variable in the console | `name: string; value: any` |
+| `.mount_native_fs` | Mount a native file system to the console | `mount_point: string;` |
 
 ### Using ImJoy API in the console
 
@@ -79,6 +83,7 @@ The complete ImJoy API can be found [here](https://imjoy.io/docs/#/api?id=api-fu
 | --- | --- | --- |
 | `api.restart` | Restart the console | |
 | `api.insertHtml` | Insert HTML to the console | `html: string; width: string; height: string` |
+| `api.mountNativeFs` | Mount a native file system to the console | `mountPoint: string;` |
 
 Usage example:
 
