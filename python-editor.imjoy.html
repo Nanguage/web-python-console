@@ -22,14 +22,19 @@
 class ImJoyPlugin {
   async setup() {
     api.log('initialized')
-    let pycon = await api.getWindow("web-python-console")
-    if (!pycon) {
-      pycon = await api.createWindow({
-        src: 'https://nanguage.github.io/web-python-console/',
-        name: 'web-python-console',
-        w: 30,
-        h: 40,
-      })
+    let pycon;
+    if ("getConsole" in api) {
+      pycon = await api.getConsole("python")
+    } else {
+      pycon = await api.getWindow("web-python-console")
+      if (!pycon) {
+        pycon = await api.createWindow({
+          src: 'https://nanguage.github.io/web-python-console/',
+          name: 'web-python-console',
+          w: 30,
+          h: 40,
+        })
+      }
     }
     this.pycon = pycon
   }
