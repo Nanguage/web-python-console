@@ -260,7 +260,7 @@
                 await restart();
             }
 
-            async insertHtml(htmlSrc, width = "50%", height = "400px") {
+            async insertHtml(htmlSrc, width = "100%", height = "400px") {
                 const term = window.term;
                 const encoded = encodeURIComponent(htmlSrc);
                 const iframe = document.createElement("iframe");

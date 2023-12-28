@@ -8,7 +8,7 @@ X, Y = np.meshgrid(x, y)
 Z = np.sin(np.sqrt(X**2 + Y**2))
 
 # Create the plot
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(5, 4))
 plt.contourf(X, Y, Z, cmap='viridis')
 plt.colorbar()
 
