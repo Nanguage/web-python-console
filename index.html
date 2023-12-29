@@ -150,14 +150,20 @@
                 }
             })
 
+            app.addMenuItem({
+                // restart
+                label: "🔄 Restart",
+                async callback() {
+                    await restart();
+                },
+            })
+
             return app;
         }
 
         async function restart() {
             const body = $("body");
-            for (const el of body.children()) {
-                el.remove();
-            }
+            $(".terminal")[0].remove();
             await initConsole(false);
         }
 
@@ -271,15 +277,12 @@
             }
         }
 
-        async function runFile(url, showCode = true, showSplit = true) {
+        async function runFile(url, showCode = true) {
             const term = window.term;
             const response = await fetch(url);
             let text = await response.text();
             text = text.replaceAll("\r\n", "\n");
             text = "\n" + text;
-            if (showSplit) {
-                term.echo(`--- Running ${url} ---`)
-            }
             term.exec(text, !showCode);
         }
 
@@ -590,22 +593,26 @@
                 term.exec("import micropip; await micropip.install('imjoy-rpc')", true)
                 const currentUrl = new URL(window.location.href);
                 const libUrl = currentUrl.origin + currentUrl.pathname + "/imjoy_encode.py";
-                await runFile(libUrl, false, false)
+                await runFile(libUrl, false)
                 pyodide.globals.set("api", new ImjoyApiWrapper(window.app.imjoy));
             }
             term.resume();
-
-            $.terminal.syntax('python')
 
             const showCode = toBool(urlParams.get("show_code"), true);
             const code = urlParams.get("code");
             if (code) {
                 term.echo("--- Running code ---")
+                $.terminal.syntax('python')
                 term.exec(code, !showCode);
-            }
-            const flie = urlParams.get("file");
-            if (flie) {
-                await runFile(flie, showCode);
+            } else {
+                const file = urlParams.get("file");
+                if (file) {
+                    term.echo(`--- Running ${file} ---`)
+                    $.terminal.syntax('python')
+                    await runFile(file, showCode);
+                } else {
+                    $.terminal.syntax('python')
+                }
             }
 
         }
