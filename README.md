@@ -44,6 +44,7 @@ This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide
 + [Sin(x) curve ASCII](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test.py)
 + [matplotlib](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_matplotlib.py)
 + [altair](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_altair.py)
++ [ImageJ.JS](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_ij.py)
 
 ### Plugin's API
 
@@ -66,10 +67,13 @@ You can also control other ImJoy plugins from the console using ImJoy API.
 For example, you can use the following code to control the [ImageJ.JS](https://ij.imjoy.io):
 
 
+![demo](./imagej_demo.png)
+
+
 ```python
 import numpy as np
 
-arr = np.random.randint(0, 255, (10,10), dtype=np.uint8)
+arr = np.random.randint(0, 255, (100,100), dtype=np.uint8)
 
 ij = await api.createWindow(src="https://ij.imjoy.io")
 await ij.viewImage(arr)
