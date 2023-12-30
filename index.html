@@ -342,6 +342,13 @@
             async mountNativeFs(mountPoint = "/mount_dir") {
                 await mountNativeFs(mountPoint);
             }
+
+            async openEditor() {
+                const plugin = await this.imjoy_api.loadPlugin(
+                    "https://nanguage.github.io/web-python-console/python-editor.imjoy.html"
+                );
+                await plugin.run();
+            }
         }
 
         function toImjoyObj(obj) {

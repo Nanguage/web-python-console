@@ -88,6 +88,7 @@ The complete ImJoy API can be found [here](https://imjoy.io/docs/#/api?id=api-fu
 | `api.restart` | Restart the console | |
 | `api.insertHtml` | Insert HTML to the console | `html: string; width: string; height: string` |
 | `api.mountNativeFs` | Mount a native file system to the console | `mountPoint: string;` |
+| `api.openEditor` | Open a Python script editor | |
 
 Usage example:
 
