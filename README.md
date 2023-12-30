@@ -98,6 +98,23 @@ await api.restart()
 await api.insertHtml("<h1>Hello World</h1>", width="100%", height="100px")
 ```
 
+### Using in ImageJ.JS
+
+This console can be used in [ImageJ.JS](https://ij.imjoy.io) as a ImJoy plugin.
+Click the Upper left ImJoy icon to open the menu, then click `+ ImJoy Plugin` to add a new plugin. Then enter the following URL to install the plugin:
+
+```
+https://nanguage.github.io/web-python-console/
+```
+
+Editor:
+
+```
+https://nanguage.github.io/web-python-console/python-editor.imjoy.html
+```
+
+Then click the menu again and click `web-python-console` to open the console, or click `python-editor` to open the editor.
+
 ### Integreate with BioImage.IO ChatBot
 
 Install and run the following plugin to register the extension for BioImage.IO ChatBot:
