@@ -45,6 +45,8 @@ This project is a fork of [Pyodide's console](https://github.com/pyodide/pyodide
 + [matplotlib](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_matplotlib.py)
 + [altair](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_altair.py)
 + [ImageJ.JS](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_ij.py)
++ [Bioengine](https://nanguage.github.io/web-python-console/?file=https://nanguage.github.io/web-python-console/test_bioengine.py)
+    * Run deep learning models in the [BioImage.IO](https://bioimage.io/#/) through the Bioengine.
 
 ### Plugin's API
 

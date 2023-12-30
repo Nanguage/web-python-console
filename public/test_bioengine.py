@@ -5,7 +5,6 @@ import pyodide_http
 pyodide_http.patch_all()  # Patch all libraries
 
 import matplotlib.pyplot as plt
-#from pyotritonclient import execute
 from imjoy_rpc.hypha import connect_to_server
 from kaibu_utils import fetch_image
 
@@ -18,12 +17,14 @@ server = await connect_to_server(
     )
 triton = await server.get_service("triton-client")
 
-ret = await triton.execute(inputs=[{'inputs': None, "model_id": "powerful-chipmunk", 'return_rdf':True}],
-                           model_name="bioengine-model-runner",
-                           serialization="imjoy",
-                          )
-print(ret['result']['rdf'])
+# get model RDF
+#ret = await triton.execute(inputs=[{'inputs': None, "model_id": "powerful-chipmunk", 'return_rdf':True}],
+#                           model_name="bioengine-model-runner",
+#                           serialization="imjoy",
+#                          )
+#print(ret['result']['rdf'])
 
+# run the model
 in_img = image[None, None, ...]
 
 ret = await triton.execute(inputs=[{"inputs":[in_img], "model_id": "powerful-chipmunk"}],
