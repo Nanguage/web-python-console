@@ -10,7 +10,7 @@
   "ui": "",
   "version": "0.1.0",
   "cover": "",
-  "description": "Register bioengine web client to chatbot",
+  "description": "Register web python console to Bioimage.IO chatbot",
   "icon": "extension",
   "inputs": null,
   "outputs": null,
@@ -25,31 +25,34 @@
 <script lang="javascript">
 class ImJoyPlugin {
   async setup() {
-    this.chatbot = await api.getWindow("BioImage.IO Chatbot")
-    if (this.chatbot) {
-      await this.registerExtensions()
+    if (api.registerChatbotExtension) {
+      await this.registerExtensions(api.registerChatbotExtension)
+    } else {
+      const chatbot = await api.getWindow("BioImage.IO Chatbot")
+      if (chatbot) {
+        await this.registerExtensions(chatbot.registerExtension)
+      }
     }
   }
 
-  async registerExtensions() {
-    const chatbot = this.chatbot
-    await chatbot.registerExtension({
+  async registerExtensions(register) {
+    await register({
       _rintf: true,
       name: "runPythonCode",
-      description: "Run python code in the python-web-console",
+      description: "The chatbot extension for execute python code using a pyodide python console.",
       async get_schema() {
         return {
           type: "object",
           title: "RunPythonCode",
-          description: "Run python code in the python-web-console",
+          description: "Run python code using the web-python-console",
           properties: {
             code: {
               type: "string",
-              description: "The Python code to run",
+              description: "The Python code to run.",
             },
             result_variable: {
               type: "string",
-              description: "The variable name to store the result, if not needed, leave it empty",
+              description: "The variable name for fetching the result. If there is no result needed to fetch from the console, use `_null`.",
             },
           },
         };
@@ -62,12 +65,15 @@ class ImJoyPlugin {
             name: "web-python-console",
           });
         }
+        await pycon.ready()
         const code = config.code
         await pycon.exec(code)
         const result_variable = config.result_variable
-        if (result_variable) {
+        if (result_variable && result_variable !== "_null") {
           const result = await pycon.get_variable(result_variable)
           return result
+        } else {
+          return "Done"
         }
       },
     })
@@ -83,8 +89,7 @@ class ImJoyPlugin {
         name: "BioImage.IO Chatbot",
       });
     }
-    this.chatbot = chatbot
-    await this.registerExtensions()
+    await this.registerExtensions(chatbot.registerExtension)
   }
 }
 
