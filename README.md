@@ -62,6 +62,7 @@ The console is integrated with ImJoy, you can use the ImJoy API to control the c
 | `.get_variable` | Get a variable from the console | `name: string` |
 | `.set_variable` | Set a variable in the console | `name: string; value: any` |
 | `.mount_native_fs` | Mount a native file system to the console | `mount_point: string;` |
+| `.ready` | A promise that resolves when the console is ready | |
 
 ### Using ImJoy API in the console
 
@@ -123,7 +124,7 @@ Then click the menu again and click `web-python-console` to open the console, or
 Install and run the following plugin to register the extension for BioImage.IO ChatBot:
 
 ```
-https://nanguage.github.io/web-python-console/chatbot-launcher.imjoy.html
+https://nanguage.github.io/web-python-console/chatbot-extension.imjoy.html
 ```
 
 A demo:

@@ -164,7 +164,8 @@
         async function restart() {
             const body = $("body");
             $(".terminal")[0].remove();
-            await initConsole(false);
+            window.console_ready = initConsole(false);
+            await window.console_ready;
         }
 
         async function mountNativeFs(mountPoint = "/mount_dir") {
@@ -188,10 +189,10 @@
                 const term = window.term;
                 term.echo(msg);
             }
-            function exec(code, show_code = true) {
+            async function exec(code, show_code = true) {
                 const term = window.term;
                 code = code.replaceAll("\r\n", "\n");
-                term.exec(code, !show_code);
+                await term.exec(code, !show_code);
             }
             function clear() {
                 const term = window.term;
@@ -216,6 +217,9 @@
             function mount_native_fs(mount_point = "/mount_dir") {
                 return mountNativeFs(mount_point);
             }
+            async function consoleReady() {
+                await window.console_ready;
+            }
 
             return {
                 _rintf: true,
@@ -228,6 +232,7 @@
                 set_variable: setVariable,
                 get_content: getConsoleContent,
                 mount_native_fs: mount_native_fs,
+                ready: consoleReady,
             }
         }
 
@@ -283,7 +288,8 @@
             let text = await response.text();
             text = text.replaceAll("\r\n", "\n");
             text = "\n" + text;
-            term.exec(text, !showCode);
+            const p = term.exec(text, !showCode);
+            await p;
         }
 
         function toJs(value) {
@@ -595,22 +601,22 @@
                 await initImJoy();
             }
 
+            term.resume();
             const installRpc = toBool(searchParams.get("install_rpc"), true);
             if (installRpc) {
-                term.exec("import micropip; await micropip.install('imjoy-rpc')", true)
+                await term.exec("import micropip; await micropip.install('imjoy-rpc')", true)
                 const currentUrl = new URL(window.location.href);
                 const libUrl = currentUrl.origin + currentUrl.pathname + "/imjoy_encode.py";
                 await runFile(libUrl, false)
                 pyodide.globals.set("api", new ImjoyApiWrapper(window.app.imjoy));
             }
-            term.resume();
 
             const showCode = toBool(urlParams.get("show_code"), true);
             const code = urlParams.get("code");
             if (code) {
                 term.echo("--- Running code ---")
                 $.terminal.syntax('python')
-                term.exec(code, !showCode);
+                await term.exec(code, !showCode);
             } else {
                 const file = urlParams.get("file");
                 if (file) {
