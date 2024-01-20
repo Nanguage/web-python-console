@@ -287,6 +287,10 @@
             }
         }
 
+        function toDigits(i, digits) {
+            return i.toString().padStart(digits, "0");
+        }
+
         async function runFile(url, showCode = true) {
             const term = window.term;
             const response = await fetch(url);
@@ -475,7 +479,10 @@
                 let unlock = await lock();
                 term.pause();
                 // multiline should be split (useful when pasting)
-                for (const c of command.split("\n")) {
+                let counter = 0;
+                const lines = command.split("\n");
+                for (const c of lines) {
+                    counter++;
                     const escaped = c.replaceAll(/\u00a0/g, " ");
                     let fut = pyconsole.push(escaped);
                     term.set_prompt(fut.syntax_check === "incomplete" ? ps2 : ps1);
@@ -529,7 +536,26 @@
                     } catch (e) {
                         if (e.constructor.name === "PythonError") {
                             const message = fut.formatted_error || e.message;
-                            term.error(message.trimEnd());
+                            let msg = "";
+                            if (lines.length > 1) {
+                                // print the error position in multiline mode
+                                const limit = 3;
+                                const maxDigits = (counter + limit).toString().length;
+                                msg += `Error occred at line ${counter}:\n`;
+                                msg += "----------------------------------------\n"
+                                let i = 0;
+                                for (const line of lines) {
+                                    i++;
+                                    if (i === counter) {
+                                        msg += toDigits(i, maxDigits) + ": " + line + "    <-- Error here!" + "\n";
+                                    } else if ((i >= counter - limit) && (i <= counter + limit)) {
+                                        msg += toDigits(i, maxDigits) + ": " + line + "\n";
+                                    }
+                                }
+                                msg += "----------------------------------------\n"
+                            }
+                            msg += message.trimEnd();
+                            term.error(msg);
                             break;
                         } else {
                             throw e;
