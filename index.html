@@ -530,6 +530,7 @@
                         if (e.constructor.name === "PythonError") {
                             const message = fut.formatted_error || e.message;
                             term.error(message.trimEnd());
+                            break;
                         } else {
                             throw e;
                         }
