@@ -10,7 +10,7 @@ from kaibu_utils import fetch_image
 
 SERVER_URL = "https://ai.imjoy.io"
 
-image = await fetch_image('https://zenodo.org/api/records/6647683/files/sample_input_0.tif/content')
+image = await fetch_image('https://zenodo.org/api/records/6647674/files/sample_input_0.tif/content')
 
 server = await connect_to_server(
         {"server_url": SERVER_URL, "method_timeout": 3000}
@@ -18,7 +18,7 @@ server = await connect_to_server(
 triton = await server.get_service("triton-client")
 
 # get model RDF
-#ret = await triton.execute(inputs=[{'inputs': None, "model_id": "powerful-chipmunk", 'return_rdf':True}],
+#ret = await triton.execute(inputs=[{'inputs': None, "model_id": "affable-shark", 'return_rdf':True}],
 #                           model_name="bioengine-model-runner",
 #                           serialization="imjoy",
 #                          )
@@ -27,7 +27,7 @@ triton = await server.get_service("triton-client")
 # run the model
 in_img = image[None, None, ...]
 
-ret = await triton.execute(inputs=[{"inputs":[in_img], "model_id": "powerful-chipmunk"}],
+ret = await triton.execute(inputs=[{"inputs":[in_img], "model_id": "affable-shark"}],
                            model_name="bioengine-model-runner",
                            serialization="imjoy",
                           )
