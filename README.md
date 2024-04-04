@@ -121,12 +121,14 @@ Then click the menu again and click `web-python-console` to open the console, or
 
 ### Integreate with BioImage.IO ChatBot
 
-Install and run the following plugin to register the extension for BioImage.IO ChatBot:
-
-```
-https://nanguage.github.io/web-python-console/chatbot-extension.imjoy.html
-```
+Try it [here](https://imjoy.io/lite?plugin=https://nanguage.github.io/web-python-console/chatbot-extension.imjoy.html)!
 
 A demo:
 
 ![demo](./chatbot_demo_1.png)
+
+Plugin links for [BioImage.IO ChatBot](https://bioimage.io/chat/):
+
+```
+https://nanguage.github.io/web-python-console/chatbot-extension.imjoy.html
+```
