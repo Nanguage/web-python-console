@@ -334,6 +334,8 @@
                 Object.assign(this, imjoy_api);
                 this.getWindow = this.getWindowOveride;
                 this.createWindow = this.createWindowOveride;
+                this.loadPlugin = this.loadPluginOveride;
+                this.getPlugin = this.getPluginOveride;
             }
 
             async getWindowOveride(config) {
@@ -346,6 +348,18 @@
                 const window = await this.imjoy_api.createWindow(config);
                 const windowWrapper = new PluginWrapper(window);
                 return windowWrapper;
+            }
+
+            async loadPluginOveride(config) {
+                const plugin = await this.imjoy_api.loadPlugin(config);
+                const pluginWrapper = new PluginWrapper(plugin);
+                return pluginWrapper;
+            }
+
+            async getPluginOveride(config) {
+                const plugin = await this.imjoy_api.getPlugin(config);
+                const pluginWrapper = new PluginWrapper(plugin);
+                return pluginWrapper;
             }
 
             async restart() {
